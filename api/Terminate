@@ -1,0 +1,10 @@
+function	handle()
+	while Config.running do
+		local	event = os.pullEventRaw()
+
+		if event == "terminate" then
+			Monitor.pcnl(Monitor.main_status, "HALTING", colors.orange)
+			Config.running = false
+		end
+	end
+end

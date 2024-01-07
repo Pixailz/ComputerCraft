@@ -1,0 +1,224 @@
+
+function	status(mon, reac)
+	Monitor.p(mon, "Status               ")
+	if reac.getStatus() then
+		Monitor.pc(mon, "ON", colors.green)
+	else
+		Monitor.pc(mon, "OFF", colors.red)
+	end
+	Monitor.nl(mon)
+end
+
+function	temperature(mon, reac)
+	local	temp = reac.getTemperature() - 273.15
+	if temp > 550 then
+		color = colors.red
+	elseif temp > 350 then
+		color = colors.orange
+	else
+		color = colors.green
+	end
+	Monitor.p(mon, "Temperture           ")
+	Monitor.pc(mon, string.format("%.2f", temp), color)
+	Monitor.nl(mon, "C")
+end
+
+function	damage(mon, reac)
+	local	pour = reac.getDamagePercent() * 100
+	local	color
+
+	if pour > 75 then
+		color = colors.red
+	elseif pour > 50 then
+		color = colors.orange
+	else
+		color = colors.green
+	end
+	Monitor.p(mon, "Damage               ")
+	Monitor.pc(mon, string.format("%.2f", pour), color)
+	Monitor.pnl(mon, "%")
+end
+
+function	coolant(mon, reac)
+	local	pour = reac.getCoolantFilledPercentage() * 100
+	local	value = reac.getCoolant()
+	local	color
+
+	if pour > 75 then
+		color = colors.green
+	elseif pour > 50 then
+		color = colors.orange
+	else
+		color = colors.red
+	end
+
+	if value.name == "minecraft:water" then
+		value_type = "Water"
+	elseif value.name == "mekanism:empty" then
+		value_type = "Empty"
+	else
+		value_type = value.name
+	end
+
+	Monitor.pnl(mon, "Coolant")
+	Monitor.pnl(mon, "    Type             "..value_type)
+	if value_type == "Empty" then
+	else
+		Monitor.p(mon, "    Quantity         ")
+		Monitor.pc(mon, value.amount, color)
+		Monitor.p(mon, "mB ")
+		Monitor.pnl(mon, string.format("%.2f", pour).."%")
+	end
+end
+
+function	heated_coolant(mon, reac)
+	local	pour = reac.getHeatedCoolantFilledPercentage() * 100
+	local	value = reac.getHeatedCoolant()
+	local	color
+
+	if pour > 75 then
+		color = colors.red
+	elseif pour > 50 then
+		color = colors.orange
+	else
+		color = colors.green
+	end
+
+	if value.name == "mekanism:empty" then
+		value_type = "Empty"
+	else
+		value_type = value.name
+	end
+
+	Monitor.pnl(mon, "HeatedCoolant")
+	Monitor.pnl(mon, "    Type             "..value_type)
+	if value_type == "Empty" then
+	else
+		Monitor.p(mon, "    Quantity         ")
+		Monitor.pc(mon, value.amount, color)
+		Monitor.p(mon, "mB ")
+		Monitor.pnl(mon, string.format("%.2f", pour).."%")
+	end
+end
+
+function	fuel(mon, reac)
+	local	pour = reac.getFuelFilledPercentage() * 100
+	local	value = reac.getFuel()
+	local	color
+
+	if pour > 75 then
+		color = colors.green
+	elseif pour > 50 then
+		color = colors.orange
+	else
+		color = colors.red
+	end
+
+	if value.name == "mekanism:fissile_fuel" then
+		value_type = "Fissile"
+	elseif value.name == "mekanism:empty" then
+		value_type = "Empty"
+	else
+		value_type = value.name
+	end
+
+	Monitor.pnl(mon, "Fuel")
+	Monitor.pnl(mon, "    Type             "..value_type)
+	Monitor.p(mon, "    Capacity         ")
+	Monitor.pc(mon, reac.getFuelCapacity() * 100, colors.blue)
+	Monitor.pnl(mon, "mB")
+	if value_type == "Empty" then
+	else
+		Monitor.p(mon, "    Quantity         ")
+		Monitor.pc(mon, value.amount, color)
+		Monitor.p(mon, "mB ")
+		Monitor.pnl(mon, string.format("%.2f", pour).."% ")
+	end
+end
+
+function	waste(mon, reac)
+	local	pour = reac.getWasteFilledPercentage() * 100
+	local	value = reac.getWaste()
+	local	color
+
+	if pour > 75 then
+		color = colors.green
+	elseif pour > 50 then
+		color = colors.orange
+	else
+		color = colors.red
+	end
+
+	if value.name == "mekanism:nuclear_waste" then
+		value_type = "Nuclear Waste"
+	elseif value.name == "mekanism:empty" then
+		value_type = "Empty"
+	else
+		value_type = value.name
+	end
+
+	Monitor.pnl(mon, "Waste")
+	Monitor.pnl(mon, "    Type             "..value_type)
+	Monitor.p(mon, "    Capacity         ")
+	Monitor.pc(mon, reac.getFuelCapacity() * 100, colors.blue)
+	Monitor.pnl(mon, "mB")
+	if value_type == "Empty" then
+	else
+		Monitor.p(mon, "    Quantity         ")
+		Monitor.pc(mon, value.amount, color)
+		Monitor.p(mon, "mB ")
+		Monitor.pnl(mon, string.format("%.2f", pour).."% ")
+	end
+end
+
+function	burn_rate(mon, reac)
+	Monitor.pnl(mon, "Burn Rate")
+	Monitor.p(mon, "    Set              ")
+	Monitor.pc(mon, reac.getBurnRate(), colors.blue)
+	Monitor.pnl(mon, reac_burn_rate)
+	Monitor.p(mon, "    Current          ")
+	Monitor.pc(mon, reac.getActualBurnRate(), colors.blue)
+	Monitor.pnl(mon, reac_burn_rate)
+	Monitor.p(mon, "    Max              ")
+	Monitor.pc(mon, reac.getMaxBurnRate(), colors.blue)
+	Monitor.pnl(mon, reac_burn_rate)
+	Monitor.p(mon, "    Heat comsumption ")
+	Monitor.pc(mon, reac.getHeatingRate(), colors.blue)
+	Monitor.pnl(mon, reac_burn_rate)
+end
+
+function	reactor(mon, reac_name, reac)
+	Periph.clear(mon)
+	sep(mon)
+	Monitor.pnl(mon, "Reactor, "..reac_name..", stats:")
+	sep(mon)
+
+	status(mon, reac)
+	temperature(mon, reac)
+	damage(mon, reac)
+	coolant(mon, reac)
+	heated_coolant(mon, reac)
+	fuel(mon, reac)
+	waste(mon, reac)
+	burn_rate(mon, reac)
+
+	sep(mon)
+end
+
+	-- TURBINE
+function	turbine(mon, turb_name, turb)
+	Periph.clear(mon)
+	sep(mon)
+	Monitor.pnl(mon, "Turbine, "..turb_name..", stats:")
+	sep(mon)
+
+	Monitor.pnl(mon, "Energy")
+	Monitor.pnl(mon, "    Filled           "..(turb.getEnergyFilledPercentage() * 100).."%")
+	Monitor.pnl(mon, "    Energy           "..turb.getEnergy().."J")
+	Monitor.pnl(mon, "    Max              "..turb.getMaxEnergy().."J")
+
+	sep(mon)
+end
+
+-- Reactor
+reac_burn_rate = "mB/t"

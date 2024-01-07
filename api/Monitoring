@@ -1,0 +1,9 @@
+
+function	monitoring()
+	while true do
+		InfoReactor.turbine(mon_turb_one, "One (Turbine)", turbine_one)
+		InfoReactor.reactor(mon_reac_one, "One", reactor_one)
+
+		sleep(Monitor.refresh_rate)
+	end
+end

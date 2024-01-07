@@ -1,0 +1,387 @@
+
+local function	char_to_int(c)
+	return bit.band(c, 0xf)
+end
+
+-- UTILS
+local function	__is_good_bigint(A)
+	if A == nil or A.n == nil then
+		return false
+	end
+	if #A == 0 then
+		return false
+	end
+	return true
+end
+
+-- __comp
+-- Compare A over B, two bigint
+-- bit 0 = A == B
+-- bit 1 = A > B
+local function	__comp(A, B)
+	local	r = 0
+
+	-- sign check
+	if A.s == 1 and not B.s == -1 then
+		return 2
+	elseif B.s == 1 and not A.s == -1 then
+		return 0
+	end
+
+	-- if equal
+	if A.n == B.n then
+		return 1
+	end
+
+	local	len_a = #A
+	local	len_b = #B
+
+	-- check for the len
+	if len_a > len_b then
+		return 2
+	elseif len_b > len_a then
+		return 0
+	end
+
+	for i = 1, #A.n do
+		local	c_a = A.n:sub(i, i)
+		local	c_b = B.n:sub(i, i)
+
+		if c_a > c_b then
+			if A.s == 1 then return 2 else return 0 end
+		elseif c_b > c_a then
+			if A.s == 1 then return 0 else return 2 end
+		end
+	end
+	return 1
+end
+
+-- STRING
+	--
+function	__concat_get(title, target)
+	c_type = type(target)
+	if c_type == "table" then
+		if not __is_good_bigint(target) then
+			error("bad "..title.." for A'..'B operator")
+		end
+		if target.s == 1 then
+			return target.n
+		else
+			return "-"..target.n
+		end
+	else
+		return target
+	end
+end
+
+function	_concat(A, B)
+	A_str = __concat_get("A", A)
+	B_str = __concat_get("B", B)
+
+	return A_str..B_str
+end -- operator A..B
+
+	-- __len
+function	_len(A)
+	if A == nil or A.n == nil then
+		return 0
+	end
+
+	if not A.s then
+		return #A.n + 1
+	end
+	return #A.n
+end -- operator #A
+
+-- LOGIC
+
+local function	_eq(A, B)
+	local	r = __comp(A, B)
+	return r == 1
+end -- __eq A == B
+
+local function	_lt(A, B)
+	local	r = __comp(A, B)
+	return r == 0
+end -- __lt A < B
+
+local function	_le(A, B)
+	local	r = __comp(A, B)
+	return r == 0 or r == 1
+end -- __le A <= B
+
+-- ARITHMETIC
+function	_add(A, B)
+	local	R = new("")
+	local	r = 0
+	local	C = 0
+	local	b = 0
+	local	c_a, c_b = copy(A), copy(B)
+
+	while #c_a.n > #c_b.n do
+		c_b.n = "0"..c_b.n
+	end
+	while #c_b.n > #c_a.n do
+		c_a.n = "0"..c_a.n
+	end
+
+	if c_b.s == -1 then
+		c_b.s = 1
+		return _sub(c_a, c_b)
+	end
+
+	for i = #c_a.n, 1, -1 do
+
+		local	n_a = char_to_int(c_a.n:sub(i, i))
+		local	n_b = char_to_int(c_b.n:sub(i, i))
+
+		r = (c_a.s * n_a) + n_b + C - b
+		C = 0
+		b = 0
+		if r >= 10 then
+			C = 1
+			r = r - 10
+		elseif r < 0 then
+			r = -r
+			R.s = -1
+			if r >= 10 then
+				B = 1
+			end
+		end
+		R.n = r..R.n
+	end
+
+	if C == 1 then
+		R.n = C..R.n
+	end
+	return R
+end -- A + B
+
+function	_sub(A, B)
+	local	R = new("")
+	local	r = 0
+	local	b = 0
+	local	C = 0
+	local	c_a, c_b = copy(A), copy(B)
+
+	while #c_a.n > #c_b.n do
+		c_b.n = "0"..c_b.n
+	end
+	while #c_b.n > #c_a.n do
+		c_a.n = "0"..c_a.n
+	end
+
+	if c_b.s == -1 then
+		c_b.s = 1
+		return _add(c_a, c_b)
+	end
+
+	for i = #c_a.n, 1, -1 do
+
+		local	n_a = char_to_int(c_a.n:sub(i, i))
+		local	n_b = char_to_int(c_b.n:sub(i, i))
+
+		r = (c_a.s * n_a) - n_b - b + C
+		C = 0
+		b = 0
+		if r < 0 then
+			b = 1
+			r = r + 10
+		elseif r >= 10 then
+			C = 1
+			r = r - 10
+		end
+		R.n = r..R.n
+	end
+
+	if b == 1 then
+		R = _sub(B, A)
+		R.s = -1
+	end
+
+	-- Remove leading zeros
+	R.n = R.n:gsub("^0+", "")
+	-- Not all zeros
+	if R.n == "" then R.n = "0" end
+
+	return R
+end -- A - B
+
+function	_mul(A, B)
+	local	c_l = copy(A)
+	local	c_r = copy(B)
+	local	R = new("0")
+
+	if _eq(B, big_zero) then
+		return copy(big_zero)
+	end
+
+	if _eq(B, big_one) then
+		return copy(A)
+	end
+
+	if #c_l.n < #c_r.n then
+		c_r = copy(A)
+		c_l = copy(B)
+	end
+
+	if c_r.s == -1 then
+		c_r.s = 1
+		if c_l.s == -1 then c_l.s = 1
+		else c_l.s = -1 end
+	end
+
+	while _eq(c_r, big_zero) == false do
+		R = _add(R, c_l)
+		c_r = _sub(c_r, big_one)
+	end
+
+	return R
+end -- A * B
+
+function	_div(A, B)
+	local	c_l = copy(A)
+	local	c_r = copy(B)
+	local	R = new("0")
+
+	if _eq(B, big_zero) then
+		error("cannot divide by zero")
+	end
+
+	if _eq(B, big_one) then
+		return copy(A)
+	end
+
+	if c_r.s == -1 then c_r.s = 1 end
+	if c_l.s == -1 then c_l.s = 1 end
+
+	while true do
+		c_l = _sub(c_l, c_r)
+		if c_l.s ~= 1 then
+			break
+		end
+		R = _add(R, big_one)
+	end
+
+	if not _eq(R, big_zero) then
+		if B.s == -1 and A.s == -1 then
+			R.s = 1
+		elseif B.s == -1 or A.s == -1 then
+			R.s = -1
+		end
+	end
+
+	return R
+end -- A / B
+
+function	_mod(A, B)
+	local	r_div = _div(A, B)
+	local	r_mul = _mul(r_div, B)
+	local	R = _sub(A, r_mul)
+
+	return R
+end -- A % B
+
+function	_pow(A, B)
+	local	c_l = copy(A)
+	local	c_r = copy(B)
+	local	R = copy(A)
+
+	while _eq(c_r, big_one) == false do
+		R = _mul(R, c_l)
+		c_r = _sub(c_r, big_one)
+	end
+	return R
+end -- A ^ B
+
+-- attributes
+local	_bi_mt = {}
+
+-- operator overload
+_bi_mt.__add = _add	-- operator +
+_bi_mt.__sub = _sub	-- operator -
+_bi_mt.__mul = _mul	-- operator *
+_bi_mt.__div = _div	-- operator /
+
+_bi_mt.__mod = _mod	-- operator %
+_bi_mt.__pow = _pow	-- operator ^
+-- _bi_mt.__unm = _unm	-- operator unary -
+
+_bi_mt.__concat = _concat	-- operator ..
+_bi_mt.__len = _len				-- operator #
+
+_bi_mt.__eq = _eq	-- operator ==	(A ~= B == not A == B)
+_bi_mt.__lt = _lt	-- operator <	(A < B == not B < A)
+_bi_mt.__le = _le	-- operator <=	(A >= B == not B <= A)
+
+-- mew
+function	new(n)
+	local	type_n = type(n)
+	o = {}
+
+	if type_n == "string" then
+		o.n = n
+	elseif type_n == "number" then
+		o.n = tostring(n)
+	else
+		return nil
+	end
+
+	if o.n:sub(1, 1) == "-" then
+		o.s = -1
+		o.n = o.n:sub(2, o.n:len())
+	else
+		o.s = 1
+	end
+
+	o = setmetatable(o, _bi_mt)
+
+	return o
+end
+
+-- copy
+-- function	copy(obj, seen)
+-- 	-- from this gist
+-- 	-- https://gist.github.com/tylerneylon/81333721109155b2d244
+
+-- 	-- Handle non-tables and previously-seend tables.
+-- 	if type(obj) ~= "table" then return obj end
+-- 	if seen and seen[obj] then return seen[obj] end
+
+-- 	-- new table; mark it as seen and copy recursively
+-- 	local	s = seen or {}
+-- 	local	res = {}
+-- 	s[obj] = res
+-- 	for k, v in pairs(obj) do res[copy(k, s)] = copy(v, s) end
+-- 	return setmetatable(res, getmetatable(ob))
+-- end
+
+function	copy(src)
+	o = {}
+	o.n = src.n
+	o.s = src.s
+
+	return setmetatable(o, getmetatable(src))
+end
+
+big_zero = new("0")
+big_one = new("1")
+big_two = new("2")
+
+function	pow(base, exp, mod)
+	local	R = copy(big_one)
+
+	while true do
+		if exp % big_two == big_one then
+			R = R * base % mod
+		end
+		exp = exp / big_two
+
+		if exp == big_zero then
+			break
+		end
+		base = base * base % mod
+	end
+
+	return R
+end

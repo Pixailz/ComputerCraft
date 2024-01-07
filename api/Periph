@@ -1,0 +1,7 @@
+local cur_conf = Config.conf[Config.profile]["peripheral"]
+
+modem = Monitor.init_periph(Monitor.main_status, cur_conf.id_modem, "modem")
+reactor_one = Monitor.init_periph(Monitor.main_status, cur_conf.id_reactor_one, "reactor one")
+turbine_one = Monitor.init_periph(Monitor.main_status, cur_conf.id_turbine_one, "turbine one")
+reactor_two = Monitor.init_periph(Monitor.main_status, cur_conf.id_reactor_two, "reactor two")
+turbine_two = Monitor.init_periph(Monitor.main_status, cur_conf.id_turbine_two, "turbine two")

@@ -1,0 +1,84 @@
+nb_client = 0
+
+client = {}
+
+protocol_port = 4444
+timeout = 0
+
+function string_starts(src, begin)
+	return string.sub(src, 1, string.len(begin)) == begin
+end
+
+function	cmd_status(id, data)
+	data = textutils.unserialize(data)
+	client[id] = data
+end
+
+function	cmd_ok(id)
+	Monitor.pnl(Monitor.server, "OKE "..id)
+	Modem.send(id, Config.hostname, "OKE")
+end
+
+function	cmd_ko(id)
+	Monitor.pnl(Monitor.server, "KO "..id)
+	Modem.send(id, Config.hostname, "KO")
+end
+
+function	cmd_register(id)
+	client[id] = {}
+	Monitor.p(Monitor.server, "ClusterID: ")
+	Monitor.pc(Monitor.server, id, colors.red)
+	Monitor.pnl(Monitor.server, " Registred")
+	nb_client = nb_client + 1
+	cmd_ok(id)
+end
+
+function	cmd_disconnect(id)
+	Monitor.p(Monitor.server, id.." disconnected")
+	Monitor.nl(Monitor.server)
+	client[id] = nil
+	nb_client = nb_client - 1
+end
+
+function	listen()
+	Modem.open(Monitor.server, protocol_port)
+	Modem.open(Monitor.server, Config.hostname)
+
+	while Config.running
+	do
+		local msg = Modem.get_msg(Monitor.server)
+
+		-- Monitor.pnl(Monitor.server, "NEW MESSAGE")
+		-- Monitor.pnl(Monitor.server, "MODEMSIDE "..msg.modemSide)
+		-- Monitor.pnl(Monitor.server, "PORT "..msg.port)
+		-- Monitor.pnl(Monitor.server, "SENDER ID "..msg.senderId)
+		-- Monitor.pnl(Monitor.server, "TEXT "..msg.text)
+		-- Monitor.pnl(Monitor.server, "SENDER DIST "..msg.senderDistance)
+		-- Monitor.nl(Monitor.server)
+
+		if Key.is_msg_secure(msg) == false then
+			cmd_ko(msg.senderId)
+		elseif msg.text == "DISCONNECT" then
+			cmd_disconnect(msg.senderId)
+		elseif msg.text == "REGISTER" then
+			cmd_register(msg.senderId)
+			os.pullEvent("modem_message")
+		elseif string_starts(msg.text, "STATUS ") then
+			cmd_status(msg.senderId, string.sub(msg.text, 7))
+		else
+			Monitor.p(Monitor.server, "Unknown COMMAND")
+			Monitor.p(Monitor.server, "id "..msg.senderId)
+			Monitor.pnl(Monitor.server, ", text "..msg.text)
+		end
+	end
+end
+
+function	monitor()
+	while Config.running
+	do
+		for k,v in pairs(client) do
+			Modem.send(k, Config.hostname, "STATUS")
+		end
+		sleep(1)
+	end
+end

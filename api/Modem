@@ -1,0 +1,29 @@
+function	get_msg(mon)
+	local	event,
+			modemSide,
+			port,
+			senderId,
+			text,
+			senderDistance = os.pullEventRaw("modem_message")
+
+	msg = {
+		["modeSide"] = modemSide,
+		["port"] = port,
+		["senderId"] = senderId,
+		["text"] = text,
+		["senderDistance"] = senderDistance,
+		["is_secure"] = -1,
+	}
+	msg.is_secure = Key.check(msg)
+	Info.msg(mon, msg)
+	return msg
+end
+
+function	send(port, dst, text)
+	Periph.modem.transmit(port, dst, text)
+end
+
+function	open(mon, port)
+	Periph.modem.open(port)
+	Info.listenning(mon, port)
+end

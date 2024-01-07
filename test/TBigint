@@ -1,0 +1,94 @@
+function	string(mon, A, B)
+	Monitor.pnl(mon, "A "..A)
+	Monitor.pnl(mon, "B "..B)
+	Monitor.pnl(mon, "len "..A..": "..#A)
+	Monitor.pnl(mon, "len "..B..": "..#B)
+	Monitor.pnl(mon, "Concat: "..A..B)
+end
+
+function	arithmetic(mon, A, B)
+	local	C = A + B
+	Monitor.pnl(mon, A.." + "..B.." = "..C)
+
+	local	C = A - B
+	Monitor.pnl(mon, A.." - "..B.." = "..C)
+
+	local	C = A * B
+	Monitor.pnl(mon, A.." * "..B.." = "..C)
+
+	local	C = A / B
+	Monitor.pnl(mon, A.." / "..B.." = "..C)
+
+	local	C = A ^ B
+	Monitor.pnl(mon, A.." ^ "..B.." = "..C)
+
+	local	C = A % B
+	Monitor.pnl(mon, A.." % "..B.." = "..C)
+end
+
+function	logic(mon, A, B)
+	-- __eq
+	if A == B then Monitor.pnl(mon, A.." == "..B)
+	else Monitor.pnl(mon, A.." != "..B) end
+	if B == A then Monitor.pnl(mon, B.." == "..A)
+	else Monitor.pnl(mon, B.." != "..A) end
+
+	-- __lt
+	if A < B then Monitor.pnl(mon, A.." < "..B)
+	else Monitor.pnl(mon, A.." >= "..B) end
+	if B < A then Monitor.pnl(mon, B.." < "..A)
+	else Monitor.pnl(mon, B.." >= "..A) end
+
+	-- __le
+	if A <= B then Monitor.pnl(mon, A.." <= "..B)
+	else Monitor.pnl(mon, A.." > "..B) end
+	if B <= A then Monitor.pnl(mon, B.." <= "..A)
+	else Monitor.pnl(mon, B.." > "..A) end
+
+	-- __gt
+	if A > B then Monitor.pnl(mon, A.." > "..B)
+	else Monitor.pnl(mon, A.." <= "..B) end
+	if B > A then Monitor.pnl(mon, B.." > "..A)
+	else Monitor.pnl(mon, B.." <= "..A) end
+
+	-- __ge
+	if A >= B then Monitor.pnl(mon, A.." >= "..B)
+	else Monitor.pnl(mon, A.." < "..B) end
+	if B >= A then Monitor.pnl(mon, B.." >= "..A)
+	else Monitor.pnl(mon, B.." < "..A) end
+end
+
+function	test(mon, A, B)
+	bignA = Bigint.new(A)
+	bignB = Bigint.new(B)
+
+	-- string(mon, bignA, bignB)
+	arithmetic(mon, bignA, bignB)
+	-- logic(mon, bignA, bignB)
+	Monitor.nl(mon)
+end
+
+function	run(mon)
+	-- basic
+	-- test(mon, 10, 2)
+	-- test(mon, 1234, 3)
+	-- test(mon, 2, 0)
+	-- test(mon, 2, 3)
+	-- test(mon, 3, 2)
+	-- test(mon, 3, -2)
+	-- test(mon, -3, 2)
+	-- test(mon, -3, -2)
+	-- test(mon, 10, 5)
+	-- test(mon, 10, -5)
+	-- test(mon, -10, 5)
+	-- test(mon, -10, -5)
+
+	-- advanced
+	-- test(mon, 1999, 2)
+	-- test(mon, 2, 1999)
+	-- test(mon, 2, -1999)
+	-- test(mon, -2, 1999)
+	-- test(mon, -2, -1999)
+	-- test(mon, "1000000000000000000000000000000000000000000000", 2)
+	-- test(mon, 2, "1000000000000000000000000000000000000000000000")
+end

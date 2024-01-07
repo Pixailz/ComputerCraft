@@ -1,0 +1,42 @@
+function	sep(mon)
+	Monitor.pcnl(mon, string.rep("=", 150), colors.blue)
+end
+
+function msg(mon, msg)
+	Monitor.p(mon, "[")
+	if msg.is_secure == 0 then
+		color_distance = colors.green
+	elseif msg.is_secure == 1 then
+		color_distance = colors.orange
+	elseif msg.is_secure == 2 then
+		color_distance = colors.blue
+	elseif msg.is_secure == 3 then
+		color_distance = colors.red
+	else
+		color_distance = colors.purple
+	end
+	if msg.senderDistance then
+		Monitor.pc(mon, string.format("%.2f", msg.senderDistance), color_distance)
+	else
+		Monitor.pc(mon, "?", color_distance)
+	end
+	Monitor.p(mon, "] ")
+	Monitor.pc(mon, msg.senderId, colors.red)
+	Monitor.p(mon, ":")
+	Monitor.pc(mon, msg.port, colors.purple)
+	Monitor.p(mon, "->")
+	Monitor.pc(mon, Config.hostname, colors.orange)
+	Monitor.p(mon, " > ")
+	Monitor.pc(mon, "[", colors.orange)
+	Monitor.p(mon, msg.text)
+	Monitor.pcnl(mon, "]", colors.orange)
+end
+
+function	listenning(mon, port)
+	sep(mon)
+	Monitor.p(mon, "listenning on ")
+	Monitor.pc(mon, Config.hostname, colors.orange)
+	Monitor.p(mon, ":")
+	Monitor.pcnl(mon, port, colors.purple)
+	sep(mon)
+end

@@ -1,0 +1,54 @@
+function	init_drive(mon, drive_id, drive_name)
+	local	drive = Monitor.init_periph(mon, drive_id, drive_name)
+	return (drive)
+end
+
+local cur_conf = Config.conf[Config.profile]["drive"]
+
+disk_in = init_drive(Monitor.main_status, cur_conf["id_drive_01"], "disk_in")
+disk_out = init_drive(Monitor.main_status, cur_conf["id_drive_02"], "disk_out")
+
+function	copy(mon, d_in, d_out)
+	if not d_in.isDiskPresent() then
+		Monitor.pnl(mon, "disk in not present.")
+		return
+	end
+	if not d_out.isDiskPresent() then
+		Monitor.pnl(mon, "disk out not present.")
+		return
+	end
+	local	in_path = "/"..d_in.getMountPath();
+	local	out_path = "/"..d_out.getMountPath();
+
+	Monitor.p(mon, "disk in path ")
+	Monitor.pcnl(mon, in_path, colors.green);
+	Monitor.p(mon, "disk out path ")
+	Monitor.pcnl(mon, out_path, colors.green);
+
+	for k, v in pairs(fs.find(in_path.."/*")) do
+		local	name = fs.getName(v)
+		local	tmp_in = in_path.."/"..name
+		local	tmp_out = out_path.."/"..name
+
+		if fs.exists(tmp_out) then
+			fs.delete(tmp_out)
+		end
+
+		fs.copy(tmp_in, tmp_out)
+		Monitor.p(mon, "copied ")
+		Monitor.pc(mon, tmp_in, colors.orange)
+		Monitor.p(mon, " over ")
+		Monitor.pcnl(mon, tmp_out, colors.purple)
+	end
+	if d_in.getDiskLabel() then
+		d_out.setDiskLabel(d_in.getDiskLabel())
+	end
+end
+
+function	setName(mon, d, name)
+	if not d.isDiskPresent() then
+		Monitor.pnl(mon, "disk is not present.")
+		return
+	end
+	d.setDiskLabel(name)
+end

@@ -1,0 +1,112 @@
+function p(mon, str)
+	local	_mon = term
+	if mon then
+		_mon = mon
+	end
+	_mon.write(str)
+end
+
+function nl(mon)
+	local	pos_x, pos_y = mon.getCursorPos()
+	local	mon_x, mon_y = mon.getSize()
+
+	mon.setCursorPos(1, pos_y + 1)
+	if pos_y + 1 > mon_y then
+		mon.scroll(1)
+		mon.setCursorPos(1, pos_y)
+	end
+end
+
+function pc(mon, text, fg, bg)
+	mon.setTextColor(fg or colors.white)
+	mon.setBackgroundColor(bg or colors.black)
+	mon.write(text)
+	mon.setTextColor(colors.white)
+	mon.setBackgroundColor(colors.black)
+end
+
+function pcnl(mon, text, fg, bg)
+	pc(mon, text, fg, bg)
+	nl(mon)
+end
+
+function pnl(mon, text)
+	p(mon, text)
+	nl(mon)
+end
+
+refresh_rate = 1
+
+function	get_periph(mon, periph_id, periph_name)
+	local	_periph = nil
+
+	p(mon, "P: "..periph_name.." ")
+	if peripheral.isPresent(periph_id) then
+		_periph = peripheral.wrap(periph_id)
+		pc(mon, "OK", colors.green)
+	else
+		pc(mon, "KO", colors.red)
+	end
+	nl(mon)
+	return _periph
+end
+
+function	init_periph(mon, periph_id, periph_name)
+	local	_periph = nil
+	if periph_id then
+		_periph = get_periph(mon, periph_id, periph_name)
+	end
+	return _periph
+end
+
+function	get_mon(mon, mon_id, mon_name)
+	local	mon = init_periph(mon, mon_id, mon_name)
+
+	if mon then
+		-- reset
+		mon.clear()
+		mon.setCursorPos(1, 1)
+		mon.setTextColor(colors.white)
+		mon.setBackgroundColor(colors.black)
+	end
+	return mon
+end
+
+function	init_mon(mon, mon_id, mon_name)
+	local	_mon = term
+	if mon_id then
+		_mon = get_mon(mon, mon_id, mon_name)
+		_mon.setTextScale(0.5)
+	end
+	return _mon
+end
+
+-- clear screan and set the cursor pos
+function clear(periph)
+	periph.clear()
+	periph.setCursorPos(1, 1)
+	periph.setTextColor(colors.white)
+	periph.setBackgroundColor(colors.black)
+end
+
+
+local cur_conf = Config.conf[Config.profile]["monitor"]
+
+clear(term)
+
+if not cur_conf then
+	cur_conf = {}
+end
+
+main_status = init_mon(term, cur_conf.id_main_status, "mon, main")
+
+reac_one = init_mon(main_status, cur_conf.id_reac_one, "mon, reactor one")
+turb_one = init_mon(main_status, cur_conf.id_turb_one, "mon, turbine one")
+
+reac_two = init_mon(main_status, cur_conf.id_reac_two, "mon, reactor two")
+turb_two = init_mon(main_status, cur_conf.id_turb_two, "mon, turbine two")
+
+server = init_mon(main_status, cur_conf.id_server, "mon, server")
+
+counter = init_mon(main_status, cur_conf.id_counter, "mon, counter")
+counter.setTextScale(2)

@@ -1,0 +1,36 @@
+-- Monitor id profile
+profile = ""
+
+hostname = os.getComputerID()
+
+running = true
+
+conf = {
+	["client"] = {
+		["monitor"] = {
+			["id_main_status"] = "right",
+		},
+		["peripheral"] = {
+			["id_modem"] = "left",
+		}
+	},
+	["portable"] = {
+		["peripheral"] = {
+			["id_modem"] = "back",
+		}
+	},
+	["server"] = {
+		["monitor"] = {
+			["id_main_status"] = "right",
+			["id_server"] = "monitor_0",
+			["id_counter"] = "monitor_1",
+		},
+		["peripheral"] = {
+			["id_modem"] = "top",
+		},
+		["drive"] = {
+			["id_drive_01"] = "left",
+			["id_drive_02"] = "drive_4",
+		}
+	}
+}

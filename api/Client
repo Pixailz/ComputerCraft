@@ -1,0 +1,94 @@
+-- display status --
+local protocol_port = 4444
+local cc_host = -1
+
+local timeout = 0
+
+function string_starts(src,begin)
+	return string.sub(src, 1, string.len(begin))==begin
+end
+
+function	send_status()
+	local	table = {
+		status = 1,
+		name = "RBNK",
+		type = "reactor_fissile",
+		water_pour = 75
+	}
+	Modem.send(cc_host, Config.hostname, "STATUS "..textutils.serialize(table))
+end
+
+function	send_register()
+	Modem.send(protocol_port, Config.hostname, "REGISTER")
+	while true do
+		local msg = Modem.get_msg(Monitor.main_status)
+
+		if not msg.senderId then
+			Monitor.pnl(Monitor.main_status, "KO nil")
+			return nil
+		elseif Key.is_msg_secure(msg) == false then
+			Monitor.pnl(Monitor.main_status, "KO "..msg.senderId)
+			return nil
+		elseif msg.port == Config.hostname then
+			if msg.text == "OKE" then
+				Monitor.pnl(Monitor.main_status, "OKE "..msg.senderId)
+				Modem.send(msg.senderId, Config.hostname, "OKE")
+				return msg.senderId
+			elseif msg.text == "KO" then
+				Monitor.pnl(Monitor.main_status, "KO "..msg.senderId)
+				return nil
+			end
+		end
+	end
+end
+
+function	send_disconnect()
+	Modem.send(protocol_port, Config.hostname, "DISCONNECT")
+end
+
+function	run()
+	Modem.open(Monitor.main_status, Config.hostname)
+
+	cc_host = send_register()
+	if cc_host == nil then
+		Monitor.pcnl(Monitor.main_status, "CC hostname could not be verified", colors.red)
+		Config.running = false
+		return
+	end
+
+	Monitor.p(Monitor.main_status, "CC hostname ")
+	Monitor.pcnl(Monitor.main_status, cc_host, colors.green)
+	Info.sep(Monitor.main_status)
+
+	while Config.running do
+		local msg = Modem.get_msg(Monitor.main_status)
+		local is_good_msg = false
+
+		if msg.senderId == cc_host then
+			is_good_msg = true
+		end
+
+		if Key.is_msg_secure(msg) == false then
+			is_good_msg = false
+		end
+
+		if is_good_msg == false then
+			Monitor.p(Monitor.main_status, "bad message from")
+			Monitor.pcnl(Monitor.main_status, msg.senderId, colors.red)
+		elseif msg.text == "STATUS" then
+			send_status()
+		elseif msg.text == "DISCONNECT" then
+			break
+		elseif msg.text == "OKE" then
+			Monitor.pnl(Monitor.main_status, "OKE "..cc_host)
+		elseif string_starts(msg.text, "SLEEP ") then
+			sleep(tonumber(string.sub(msg.text, strlen(6))))
+		else
+			Monitor.pnl(Monitor.main_status, "Unknown COMMAND")
+			Monitor.pnl(Monitor.main_status, "msg.text ", msg.text)
+		end
+		sleep(0.8)
+	end
+	Monitor.pnl(Monitor.main_status, Config.hostname.." disconnected")
+	send_disconnect()
+end
